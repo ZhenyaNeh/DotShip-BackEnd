@@ -28,7 +28,7 @@ export function TwoFactorAuthTemplate({
   companyName = "DotShip" 
 }: TwoFactorAuthTemplateProps) {
   // Форматируем токен для лучшей читаемости
-  const formattedToken = token.match(/.{1,3}/g)?.join(' ') || token;
+  const formattedToken = token.match(/.{1,3}/g)?.join('') || token;
 
   return (
     <Tailwind>
