@@ -30,7 +30,7 @@ export class AuthService {
     private readonly twoFactorAuthService: TwoFactorAuthService
   ) {}
 
-  public async register(req: Request, dto: RegisterDto) {
+  public async register(dto: RegisterDto) {
     const isExists = await this.userService.findByEmail(dto.email);
 
     if (isExists) {
@@ -104,6 +104,8 @@ export class AuthService {
       );
     }
 
+    console.log(user);
+
     return this.saveSession(req, user);
   }
 
@@ -118,8 +120,6 @@ export class AuthService {
     if (!profile) {
       throw new Error('Canon find profile.');
     }
-
-    console.log(profile);
 
     const account = await this.prismaService.account.findFirst({
       where: { id: profile.id, provider: profile.provider },

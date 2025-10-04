@@ -32,7 +32,7 @@ export function ConfirmationTemplate({
   userName = "User",
   companyName = "DotShip"
 }: ConfirmationTemplateProps) {
-  const confirmLink = `${domain}/auth/new-verification?token=${token}`;
+  const confirmLink = `${domain}/auth/verification?token=${token}`;
 
   return (
     <Tailwind
