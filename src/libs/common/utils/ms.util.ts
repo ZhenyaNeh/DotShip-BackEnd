@@ -60,7 +60,8 @@ export function ms(str: StringValue): number {
       str
     );
 
-  const groups = match?.groups as { value: string; type?: string } | undefined;
+  // const groups = match?.groups as { value: string; type?: string } | undefined;
+  const groups = match?.groups as { value: string; type?: string };
   if (!groups) {
     return NaN;
   }

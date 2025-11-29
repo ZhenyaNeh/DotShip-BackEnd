@@ -2,8 +2,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { RedisStore } from 'connect-redis';
-import cookieParser from 'cookie-parser';
-import session from 'express-session';
+import * as cookieParser from 'cookie-parser';
+import * as session from 'express-session';
 import { createClient } from 'redis';
 
 import { AppModule } from './app.module';
@@ -14,7 +14,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const config = app.get(ConfigService);
-  const redis = createClient({ url: config.getOrThrow('REDIS_URI') });
+  const redis = createClient({ url: config.getOrThrow('REDIS_DB_URI') });
   await redis.connect();
 
   app.use(cookieParser(config.getOrThrow<string>('COOKIES_SECRET')));
