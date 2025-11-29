@@ -1,8 +1,10 @@
+version: '3.7'
+
 services:
 
   db:
     container_name: postgres
-    image: postgres:latest
+    image: postgres:15.2
     restart: always
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -17,7 +19,7 @@ services:
 
   redis:
     container_name: redis
-    image: redis:latest
+    image: redis:5.0
     restart: always
     ports:
       - 6379:6379

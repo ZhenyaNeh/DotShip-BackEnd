@@ -1,5 +1,5 @@
-import { User } from '@prisma/__generated__';
 import 'express-session';
+import { User } from 'prisma/generated/client';
 
 declare module 'express-session' {
   interface SessionData {

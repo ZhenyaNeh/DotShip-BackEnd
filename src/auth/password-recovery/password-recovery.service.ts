@@ -3,8 +3,8 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { TokenType } from '@prisma/__generated__';
 import { hash } from 'argon2';
+import { TokenType } from 'prisma/generated/enums';
 import { v4 as uuidv4 } from 'uuid';
 
 import { MailService } from '@/libs/common/mail/mail.service';

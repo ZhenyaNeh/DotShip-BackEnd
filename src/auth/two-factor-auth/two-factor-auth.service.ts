@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { TokenType } from '@prisma/__generated__';
+import { TokenType } from 'prisma/generated/enums';
 
 import { MailService } from '@/libs/common/mail/mail.service';
 import { PrismaService } from '@/prisma/prisma.service';
