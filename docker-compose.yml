@@ -7,9 +7,9 @@ services:
     image: postgres:15.2
     restart: always
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=rootpost
+      - POSTGRES_PASSWORD=rootpost1234
+      - POSTGRES_DB=dot-ship
     ports:
       - 5433:5432
     volumes:
@@ -19,13 +19,42 @@ services:
 
   redis:
     container_name: redis
-    image: redis:5.0
+    image: redis:latest
     restart: always
     ports:
       - 6379:6379
-    command: redis-server --requirepass ${REDIS_PASSWORD}
+    command: redis-server --requirepass rootredis1234
     volumes:
       - redis_data:/data
+    networks:
+      - backend
+
+  backend:
+    build: ./
+    container_name: dot-ship-backend
+    restart: always
+    ports:
+      - 5000:5000
+    env_file:
+      - ./.env
+    extra_hosts:
+      - "dot-ship.com:192.168.0.103"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - backend
+
+  frontend:
+    build: ../DotShip-FrontEnd
+    container_name: dot-ship-frontend
+    restart: always
+    ports:
+      - 3000:3000
+    env_file:
+      - ../DotShip-FrontEnd/.env
+    extra_hosts:
+      - "dot-ship.com:192.168.0.103"
     networks:
       - backend
     
