@@ -6,11 +6,17 @@ import {
   HttpStatus,
   Param,
   Patch,
+  Res,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 import { UserRole } from 'prisma/generated/enums';
 
 import { Authorization } from '@/auth/decorators/auth.decorator';
 import { Authorized } from '@/auth/decorators/authorized.decorator';
+import { MulterFile } from '@/libs/common/yandex-storage/interfaces/multer-file.interface';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserService } from './user.service';
@@ -26,6 +32,16 @@ export class UserController {
     return this.userService.findById(userId);
   }
 
+  @Authorization()
+  @Patch('profile')
+  @HttpCode(HttpStatus.OK)
+  public async updateProfile(
+    @Authorized('id') userId: string,
+    @Body() dto: UpdateUserDto
+  ) {
+    return this.userService.update(userId, dto);
+  }
+
   @Authorization(UserRole.ADMIN)
   @Get('by-id/:id')
   @HttpCode(HttpStatus.OK)
@@ -35,11 +51,22 @@ export class UserController {
 
   @Authorization()
   @HttpCode(HttpStatus.OK)
-  @Patch('profile')
-  public async updateProfile(
+  @Patch('avatar/upload')
+  @UseInterceptors(FileInterceptor('avatar'))
+  public async uploadUserAvatar(
     @Authorized('id') userId: string,
-    @Body() dto: UpdateUserDto
+    @UploadedFile() file: MulterFile
   ) {
-    return this.userService.update(userId, dto);
+    return this.userService.uploadUserAvatar(userId, file);
+  }
+
+  @Authorization()
+  @Get('avatar/:filename')
+  @HttpCode(HttpStatus.OK)
+  public async getUserAvatar(
+    @Param('filename') filename: string,
+    @Res() res: Response
+  ) {
+    return this.userService.getUserAvatar(filename, res);
   }
 }
