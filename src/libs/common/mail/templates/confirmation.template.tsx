@@ -7,7 +7,6 @@ import {
   Head,
   Heading,
   Html,
-  // Img,
   Link,
   Preview,
   Row,

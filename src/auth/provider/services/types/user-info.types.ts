@@ -3,7 +3,7 @@ export type TypeUserInfo = {
   picture: string;
   name: string;
   email: string;
-  access_token?: string | null;
+  access_token?: string;
   refresh_token?: string;
   expires_at: number;
   provider: string;

@@ -2,7 +2,8 @@ import { forwardRef, Module } from '@nestjs/common';
 
 import { MailModule } from '@/libs/common/mail/mail.module';
 import { MailService } from '@/libs/common/mail/mail.service';
-import { UserService } from '@/user/user.service';
+import { PrismaModule } from '@/prisma/prisma.module';
+import { UserModule } from '@/user/user.module';
 
 import { AuthModule } from '../auth.module';
 
@@ -10,9 +11,9 @@ import { EmailConfirmationController } from './email-confirmation.controller';
 import { EmailConfirmationService } from './email-confirmation.service';
 
 @Module({
-  imports: [MailModule, forwardRef(() => AuthModule)],
+  imports: [PrismaModule, MailModule, UserModule, forwardRef(() => AuthModule)],
   controllers: [EmailConfirmationController],
-  providers: [EmailConfirmationService, UserService, MailService],
+  providers: [EmailConfirmationService, MailService],
   exports: [EmailConfirmationService],
 })
 export class EmailConfirmationModule {}

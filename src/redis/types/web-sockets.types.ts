@@ -1,0 +1,5 @@
+export enum WebSocketServerTypes {
+  MATCHMAKING = 'MATCHMAKING',
+  GAME_SESSION = 'GAME_SESSION',
+  NOTIFICATION = 'NOTIFICATION',
+}

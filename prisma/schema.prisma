@@ -5,26 +5,31 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  
 }
 
 model User {
-  id String @id @default(uuid())
+  id                String     @id @default(uuid())
+  email             String     @unique
+  password          String
+  displayName       String
+  picture           String?
+  role              UserRole   @default(REGULAR)
+  isVerified        Boolean    @default(false) @map("is_verified")
+  isTwoFactorEnable Boolean    @default(false) @map("is_two_factor_enable")
+  method            AuthMethod
+  rating            Int?       @default(0)
 
-  email    String @unique
-  password String
-
-  displayName String
-  picture     String?
-
-  role UserRole @default(REGULAR)
-
-  isVerified        Boolean @default(false) @map("is_verified")
-  isTwoFactorEnable Boolean @default(false) @map("is_two_factor_enable")
-
-  method AuthMethod
-
-  accounts Account[]
+  accounts                 Account[]
+  players                  Player[]
+  battleRoyalPlayers       BattleRoyalPlayer[]
+  sendFriendRequests       FriendRequest[]            @relation("FriendRequestSender")
+  receivedFriendRequests   FriendRequest[]            @relation("FriendRequestReceiver")
+  ratingHistories          RatingHistory[]
+  battleRoyalRatingHistory BattleRoyalRatingHistory[]
+  gameResults              GameResult[]               @relation("GameResultWinner")
+  battleRoyalGameResults   BattleRoyalGameResult[]    @relation("BattleRoyalGameResultWinner")
+  createdRooms             Room[]                     @relation("RoomCreator")
+  createdBattleRoyalRooms  BattleRoyalRoom[]          @relation("BattleRoyalRoomCreator")
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -33,20 +38,18 @@ model User {
 }
 
 model Account {
-  id String @id @default(uuid())
-
-  type     String
-  provider String
-
+  id           String  @id @default(uuid())
+  type         String
+  provider     String
   refreshToken String? @map("refresh_token")
   accessToken  String? @map("access_token")
   expiresAt    Int     @map("expires_at")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
   user   User?   @relation(fields: [userId], references: [id])
   userId String? @map("user_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("accounts")
 }
@@ -64,6 +67,325 @@ model Token {
   @@map("tokens")
 }
 
+model Player {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String @map("room_id")
+
+  moves Move[]
+  ships Ship[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("players")
+}
+
+model Move {
+  id     String     @id @default(uuid())
+  x      Int
+  y      Int
+  result MoveResult
+
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String @map("player_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([playerId])
+  @@map("moves")
+}
+
+model Ship {
+  id        String @id @default(uuid())
+  shipId    Int
+  x         Int
+  y         Int
+  w         Int
+  h         Int
+  health    Int
+  maxHealth Int    @default(1) @map("max_health")
+
+  player   Player @relation(fields: [playerId], references: [id])
+  playerId String @map("player_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([playerId, shipId])
+  @@index([playerId])
+  @@map("ships")
+}
+
+model Room {
+  id         String      @id @default(uuid())
+  playerTurn String?     @map("player_turn")
+  privacy    RoomPrivacy @default(PUBLIC)
+
+  creator   User   @relation("RoomCreator", fields: [creatorId], references: [id])
+  creatorId String @map("creator_id")
+
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String @map("game_id")
+
+  players     Player[]
+  gameResults GameResult[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("rooms")
+}
+
+model Game {
+  id          String  @id @default(uuid())
+  displayName String  @map("display_name")
+  picture     String?
+  minPlayers  Int     @map("min_players")
+  maxPlayers  Int     @map("max_players")
+  description String?
+
+  isVisible     Boolean    @default(true) @map("is_visible")
+  gameMode      GameMode   @default(CLASSIC) @map("game_mode")
+  difficulty    Difficulty @default(MEDIUM)
+  estimatedTime Int        @default(30) @map("estimated_time") // в минутах
+
+  rooms            Room[]
+  battleRoyalRooms BattleRoyalRoom[]
+  rules            Rule[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("games")
+}
+
+model Rule {
+  id          String @id @default(uuid())
+  gameId      String @map("game_id")
+  title       String
+  description String
+  order       Int // порядок отображения правил
+  game        Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("rules")
+}
+
+model FriendRequest {
+  id     String              @id @default(uuid())
+  status FriendRequestStatus @default(PENDING)
+
+  sender   User   @relation("FriendRequestSender", fields: [senderId], references: [id])
+  senderId String @map("sender_id")
+
+  receiver   User   @relation("FriendRequestReceiver", fields: [receiverId], references: [id])
+  receiverId String @map("receiver_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
+}
+
+model RatingHistory {
+  id           String @id @default(uuid())
+  oldRating    Int    @map("old_rating")
+  newRating    Int    @map("new_rating")
+  ratingChange Int    @map("rating_change")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  gameResult   GameResult @relation(fields: [gameResultId], references: [id])
+  gameResultId String     @map("game_result_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("rating_history")
+}
+
+model GameResult {
+  id String @id @default(uuid())
+
+  room   Room   @relation(fields: [roomId], references: [id])
+  roomId String @map("room_id")
+
+  winner   User?   @relation("GameResultWinner", fields: [winnerId], references: [id])
+  winnerId String? @map("winner_id")
+
+  ratingHistory RatingHistory[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("game_results")
+}
+
+// ====================== BATTLE ROYAL ======================
+
+model BattleRoyalPlayer {
+  id String @id @default(uuid())
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  room   BattleRoyalRoom @relation(fields: [roomId], references: [id])
+  roomId String          @map("room_id")
+
+  x        Int @default(0)
+  y        Int @default(0)
+  lives    Int @default(1)
+  maxLives Int @default(1) @map("max_lives")
+
+  remainingMoves   Int @default(1) @map("remaining_moves")
+  remainingAttacks Int @default(1) @map("remaining_attacks")
+
+  movementBoost Int @default(0) @map("movement_boost")
+  attackBoost   Int @default(0) @map("attack_boost")
+  visionRadius  Int @default(3) @map("vision_radius")
+
+  kills            Int @default(0)
+  damageDealt      Int @default(0) @map("damage_dealt")
+  distanceTraveled Int @default(0) @map("distance_traveled")
+
+  isAlive          Boolean @default(true) @map("is_alive")
+  eliminatedBy     String? @map("eliminated_by")
+  eliminationOrder Int?    @map("elimination_order")
+
+  visibleCells BattleRoyalVisibleCell[]
+  upgradeSlots BattleRoyalUpgradeSlot[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([roomId])
+  @@map("battle_royal_players")
+}
+
+model BattleRoyalVisibleCell {
+  id String @id @default(uuid())
+
+  x Int
+  y Int
+
+  player   BattleRoyalPlayer @relation(fields: [playerId], references: [id])
+  playerId String            @map("player_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@unique([playerId, x, y])
+  @@index([playerId])
+  @@map("battle_royal_visible_cells")
+}
+
+model BattleRoyalUpgradeSlot {
+  id          String                  @id @default(uuid())
+  slotIndex   Int                     @map("slot_index")
+  upgradeType BattleRoyalUpgradeType? @map("upgrade_type")
+
+  player   BattleRoyalPlayer @relation(fields: [playerId], references: [id])
+  playerId String            @map("player_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([playerId, slotIndex])
+  @@map("battle_royal_upgrade_slots")
+}
+
+model BattleRoyalRoom {
+  id             String                @id @default(uuid())
+  playerTurn     String?               @map("player_turn")
+  privacy        RoomPrivacy           @default(PUBLIC)
+  fieldSize      Int                   @default(20) @map("field_size")
+  status         BattleRoyalRoomStatus @default(WAITING)
+  turnNumber     Int                   @default(0) @map("turn_number")
+  safeZoneRadius Int                   @default(20) @map("safe_zone_radius") // текущий радиус безопасной зоны
+  nextShrinkTurn Int?                  @map("next_shrink_turn") // ход следующего сужения
+
+  creator   User   @relation("BattleRoyalRoomCreator", fields: [creatorId], references: [id])
+  creatorId String @map("creator_id")
+
+  game   Game   @relation(fields: [gameId], references: [id])
+  gameId String @map("game_id")
+
+  players               BattleRoyalPlayer[]
+  upgrades              BattleRoyalUpgrade[]
+  battleRoyalGameResult BattleRoyalGameResult[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("battle_royal_rooms")
+}
+
+model BattleRoyalUpgrade {
+  id          String                 @id @default(uuid())
+  x           Int
+  y           Int
+  upgradeType BattleRoyalUpgradeType @map("upgrade_type")
+  isCollected Boolean                @default(false) @map("is_collected")
+  collectedBy String?                @map("collected_by") // ID игрока, который собрал
+  collectedAt DateTime?              @map("collected_at")
+
+  room   BattleRoyalRoom @relation(fields: [roomId], references: [id])
+  roomId String          @map("room_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([roomId, x, y])
+  @@index([roomId, isCollected])
+  @@map("battle_royal_upgrades")
+}
+
+model BattleRoyalRatingHistory {
+  id           String @id @default(uuid())
+  oldRating    Int    @map("old_rating")
+  newRating    Int    @map("new_rating")
+  ratingChange Int    @map("rating_change")
+
+  user   User   @relation(fields: [userId], references: [id])
+  userId String @map("user_id")
+
+  gameResult   BattleRoyalGameResult @relation(fields: [gameResultId], references: [id])
+  gameResultId String                @map("game_result_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("battle_royal_rating_history")
+}
+
+model BattleRoyalGameResult {
+  id String @id @default(uuid())
+
+  room   BattleRoyalRoom @relation(fields: [roomId], references: [id])
+  roomId String          @map("room_id")
+
+  winner   User?   @relation("BattleRoyalGameResultWinner", fields: [winnerId], references: [id])
+  winnerId String? @map("winner_id")
+
+  ratingHistory BattleRoyalRatingHistory[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("battle_royal_game_results")
+}
+
+// ====================== ENUMS ======================
+
 enum UserRole {
   REGULAR
   ADMIN
@@ -79,4 +401,47 @@ enum TokenType {
   VERIFICATION
   TWO_FACTOR
   PASSWORD_RESET
+}
+
+enum GameMode {
+  CLASSIC
+  EVENTS
+  BATTLE_ROYAL
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum RoomPrivacy {
+  PUBLIC
+  PRIVATE
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+enum MoveResult {
+  HIT
+  MISS
+  SUNK
+}
+
+enum BattleRoyalUpgradeType {
+  EXTRA_LIFE
+  MOVEMENT_BOOST
+  ATTACK_BOOST
+  VISION_BOOST
+}
+
+enum BattleRoyalRoomStatus {
+  WAITING
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
 }
