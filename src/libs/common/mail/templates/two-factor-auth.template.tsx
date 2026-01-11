@@ -6,7 +6,6 @@ import {
   Head,
   Heading,
   Html,
-  // Img,
   Link,
   Preview,
   Row,
@@ -27,13 +26,12 @@ export function TwoFactorAuthTemplate({
   userName = "User", 
   companyName = "DotShip" 
 }: TwoFactorAuthTemplateProps) {
-  // Форматируем токен для лучшей читаемости
   const formattedToken = token.match(/.{1,3}/g)?.join('') || token;
 
   return (
     <Tailwind>
       <Html>
-        <Head />
+        <Head/>
         <Preview>Your two-factor authentication code for {companyName}</Preview>
         <Body className="bg-gray-50 font-sans py-8 px-2">
           <Container className="bg-white border border-gray-200 rounded-lg shadow-sm mx-auto p-8 max-w-2xl">
@@ -63,7 +61,7 @@ export function TwoFactorAuthTemplate({
                 Please enter this code in the verification screen to complete your login.
               </Text>
               <Text className="text-gray-700">
-                If you didn't request this code, please ignore this message or contact support if you have concerns.
+                If you didn&apos;t request this code, please ignore this message or contact support if you have concerns.
               </Text>
             </Section>
 
