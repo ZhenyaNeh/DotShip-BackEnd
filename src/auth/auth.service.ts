@@ -32,7 +32,7 @@ export class AuthService {
   ) {}
 
   public async register(dto: RegisterDto) {
-    const isExists = await this.userService.findByEmail(dto.email);
+    const isExists = await this.userService.findByEmailForRegister(dto.email);
 
     if (isExists) {
       throw new ConflictException(
@@ -46,6 +46,7 @@ export class AuthService {
       dto.name,
       '',
       AuthMethod.CREDENTIALS,
+      0,
       false
     );
 
@@ -105,8 +106,6 @@ export class AuthService {
       );
     }
 
-    console.log(user);
-
     return this.saveSession(req, user);
   }
 
@@ -149,6 +148,7 @@ export class AuthService {
       profile.name,
       profile.picture,
       authMethod,
+      0,
       true
     );
 
@@ -179,7 +179,9 @@ export class AuthService {
             )
           );
         }
-        res.clearCookie(this.configService.getOrThrow<string>('SESSION_NAME'));
+        res.clearCookie(this.configService.getOrThrow<string>('SESSION_NAME'), {
+          domain: this.configService.getOrThrow<string>('SESSION_DOMAIN'),
+        });
         resolve();
       });
     });

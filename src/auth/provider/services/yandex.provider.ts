@@ -11,12 +11,12 @@ interface YandexProfile extends Record<string, any> {
   default_email?: string;
   is_avatar_empty?: boolean;
   default_avatar_id?: string;
-  birthday?: string | null;
+  birthday?: string;
   first_name?: string;
   last_name?: string;
   display_name?: string;
   real_name?: string;
-  sex?: 'male' | 'female' | null;
+  sex?: 'male' | 'female';
   default_phone?: { id: number; number: string };
   access_token: string;
   refresh_token?: string;
